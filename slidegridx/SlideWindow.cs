@@ -13,7 +13,7 @@ public class SlideWindow : IDisposable
 {
     public NativeWindow Window { get; private set; }
     public Grid ForGrid { get; private set; }
-    public DateTime NextAdvance = DateTime.MaxValue;
+    public DateTime AutoAdvanceTime = DateTime.MaxValue;
 
     private int ShaderHandle = -1;
     private int ElementBufferObject = -1;
@@ -93,10 +93,28 @@ public class SlideWindow : IDisposable
         SetNextAdvanceTime();
     }
 
-    public void Advance()
+    public void Next()
     {
         ShowSlide(+1);
         SetNextAdvanceTime();
+    }
+
+    public void Previous()
+    {
+        ShowSlide(-1);
+        SetNextAdvanceTime();
+    }
+
+    public void ToggleManualAdvance()
+    {
+        AutoAdvance = !AutoAdvance;
+        SetNextAdvanceTime();
+    }
+
+    public void ToggleHighlightsOnly()
+    {
+        HighlightsOnly = !HighlightsOnly;
+        ReloadAll();
     }
 
     private void GetPlaybackSequence()
@@ -249,12 +267,12 @@ public class SlideWindow : IDisposable
     {
         if (!AutoAdvance)
         {
-            NextAdvance = DateTime.MaxValue;
+            AutoAdvanceTime = DateTime.MaxValue;
             return;
         }
 
         double stagger = (Config.StaggerMode == PlaybackStaggerMode.Staggered) ? random.Next(1000) - 500 : 0;
-        NextAdvance = DateTime.Now.AddSeconds(Config.ShuffleTime + stagger);
+        AutoAdvanceTime = DateTime.Now.AddSeconds(Config.ShuffleTime + stagger);
     }
 
     private void ShowSlide(int advance = 0, bool changeHighlightsMode = false)

@@ -7,7 +7,10 @@ namespace slidegridx;
 
 public static class Slideshow
 {
-    private static List<SlideWindow> windows = new();
+    private static List<SlideWindow> Windows = new();
+
+    // when true, a command goes to all grid windows
+    private static bool AllWindows = false;
     
     public static void Play()
     {
@@ -38,36 +41,102 @@ public static class Slideshow
                 Dispose();
                 Environment.Exit(1);
             }
-            windows.Add(win);
+            Windows.Add(win);
         }
 
         var running = true;
         while (running)
         {
             // gather input
-            foreach (var win in windows)
+            foreach (var win in Windows)
             {
                 win.Window.NewInputFrame();
             }
             NativeWindow.ProcessWindowEvents(waitForEvents: false);
 
-            // exiting?
-            foreach (var win in windows)
+            // process inputs
+            foreach (var win in Windows)
             {
+                // exiting?
                 if (win.Window.KeyboardState.IsKeyReleased(Keys.Escape))
                 {
                     running = false;
                     break;
                 }
+                
+                // toggle all windows? (tilde / backtick / reverse-apostrophe key)
+                if (win.Window.KeyboardState.IsKeyReleased(Keys.GraveAccent))
+                {
+                    AllWindows = !AllWindows;
+                    break;
+                }
+                
+                // manual advance toggle
+                if (win.Window.KeyboardState.IsKeyReleased(Keys.Space))
+                {
+                    if (AllWindows)
+                    {
+                        foreach (var w in Windows) w.ToggleManualAdvance();
+                    }
+                    else
+                    {
+                        win.ToggleManualAdvance();
+                    }
+                    break;
+                }
+                
+                // highlights-only toggle
+                if (win.Window.KeyboardState.IsKeyReleased(Keys.Enter))
+                {
+                    if (AllWindows)
+                    {
+                        foreach (var w in Windows) w.ToggleHighlightsOnly();
+                    }
+                    else
+                    {
+                        win.ToggleHighlightsOnly();
+                    }
+                    break;
+                }
+                
+                // previous
+                if (win.Window.KeyboardState.IsKeyReleased(Keys.Left) 
+                    || win.Window.MouseState.IsButtonReleased(MouseButton.Left)
+                    || win.Window.MouseState.ScrollDelta.Y < 0)
+                {
+                    if (AllWindows)
+                    {
+                        foreach (var w in Windows) w.Previous();
+                    }
+                    else
+                    {
+                        win.Previous();
+                    }
+                    break;
+                }
+                
+                // next
+                if (win.Window.KeyboardState.IsKeyReleased(Keys.Right) 
+                    || win.Window.MouseState.IsButtonReleased(MouseButton.Right)
+                    || win.Window.MouseState.ScrollDelta.Y > 0)
+                {
+                    if (AllWindows)
+                    {
+                        foreach (var w in Windows) w.Next();
+                    }
+                    else
+                    {
+                        win.Next();
+                    }
+                    break;
+                }
             }
             if (!running) continue;
-
-            // TODO process inputs
             
             // auto-advance
-            foreach (var win in windows)
+            foreach (var win in Windows)
             {
-                if (DateTime.Now >= win.NextAdvance) win.Advance();
+                if (DateTime.Now >= win.AutoAdvanceTime) win.Next();
             }
         }
 
@@ -97,12 +166,12 @@ public static class Slideshow
 
     private static void Dispose()
     {
-        foreach (var win in windows)
+        foreach (var win in Windows)
         {
             if (win.Window.Exists) win.Window.Close();
             win.Window.Dispose();
         }
-        windows.Clear();
+        Windows.Clear();
         GLFW.Terminate();        
     }
 }
