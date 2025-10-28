@@ -1,4 +1,4 @@
-##########################################################################
+﻿##########################################################################
 # SlideGridX Config File
 #
 # All content including comments were generated. If you modify the
@@ -82,24 +82,24 @@ HighlightFreq: 15
 5760,0,1920,2160,Automatic,LargestDimension
 
 [Content]
-/media/windowsC/Users/Jon/Wallpaper/1984.jpg
-/media/windowsC/Users/Jon/Wallpaper/3D_BW_Cubes_by_evilsteve.jpg
-/media/windowsC/Users/Jon/Wallpaper/3D_Sculpt_Fractal_by_love1008.jpg
-/media/windowsC/Users/Jon/Wallpaper/3_by_sourcake.jpg
-/media/windowsC/Users/Jon/Wallpaper/3_Spheres_by_JorzoR.jpg
-/media/windowsC/Users/Jon/Wallpaper/400k_psy_wall_by_plopmeout.jpg
-/media/windowsC/Users/Jon/Wallpaper/6AM_by_DEZIN.jpg
-/media/windowsC/Users/Jon/Wallpaper/Abstacio_Explosion_by_BlackFireKG.jpg
-/media/windowsC/Users/Jon/Wallpaper/abstractMinimalism_31_by_love1008.jpg
-/media/windowsC/Users/Jon/Wallpaper/Abstract_Apophysis_002_by_Gibson125.jpg
-/media/windowsC/Users/Jon/Wallpaper/Abstract_Blue_by_sabrine_wallpapers.jpg
-/media/windowsC/Users/Jon/Wallpaper/Abstract_Dark_by_sabrine_wallpapers.jpg
-/media/windowsC/Users/Jon/Wallpaper/Abstract_Nebula_by_meosoft.jpg
-/media/windowsC/Users/Jon/Wallpaper/Abstract___Blue_Tubing_by_matt_catt.jpg
-/media/windowsC/Users/Jon/Wallpaper/Acid_Wrought_Excremeditation_by_catastroman.png
-/media/windowsC/Users/Jon/Wallpaper/adrenaline_by_mickern.jpg
-/media/windowsC/Users/Jon/Wallpaper/adventuresome_by_farout49.png
-/media/windowsC/Users/Jon/Wallpaper/Advisory.jpg
+C:\Users\Jon\Wallpaper\1984.jpg
+C:\Users\Jon\Wallpaper\3D_BW_Cubes_by_evilsteve.jpg
+C:\Users\Jon\Wallpaper\3D_Sculpt_Fractal_by_love1008.jpg
+C:\Users\Jon\Wallpaper\3_by_sourcake.jpg
+C:\Users\Jon\Wallpaper\3_Spheres_by_JorzoR.jpg
+C:\Users\Jon\Wallpaper\400k_psy_wall_by_plopmeout.jpg
+C:\Users\Jon\Wallpaper\6AM_by_DEZIN.jpg
+C:\Users\Jon\Wallpaper\Abstacio_Explosion_by_BlackFireKG.jpg
+C:\Users\Jon\Wallpaper\abstractMinimalism_31_by_love1008.jpg
+C:\Users\Jon\Wallpaper\Abstract_Apophysis_002_by_Gibson125.jpg
+C:\Users\Jon\Wallpaper\Abstract_Blue_by_sabrine_wallpapers.jpg
+C:\Users\Jon\Wallpaper\Abstract_Dark_by_sabrine_wallpapers.jpg
+C:\Users\Jon\Wallpaper\Abstract_Nebula_by_meosoft.jpg
+C:\Users\Jon\Wallpaper\Abstract___Blue_Tubing_by_matt_catt.jpg
+C:\Users\Jon\Wallpaper\Acid_Wrought_Excremeditation_by_catastroman.png
+C:\Users\Jon\Wallpaper\adrenaline_by_mickern.jpg
+C:\Users\Jon\Wallpaper\adventuresome_by_farout49.png
+C:\Users\Jon\Wallpaper\Advisory.jpg
 
 [Highlights]
-/media/windowsC/mv10.github.io/assets/headers/*
+C:\mv10.github.io\assets\headers\*

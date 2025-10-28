@@ -95,25 +95,6 @@ public class SlideWindow : IDisposable
         SetNextAdvanceTime();
     }
 
-    private void RenderInit()
-    {
-        GL.UseProgram(ShaderHandle);
-        
-        // find the frag uniforms
-        UniformSlide = GL.GetUniformLocation(ShaderHandle, "slide");
-        UniformResolution = GL.GetUniformLocation(ShaderHandle, "resolution");
-        UniformImageSize = GL.GetUniformLocation(ShaderHandle, "imagesize");
-        UniformSizeMode = GL.GetUniformLocation(ShaderHandle, "sizemode");
-        
-        // prepare the vertex stage
-        var locationVertices = GL.GetAttribLocation(ShaderHandle, "vertices");
-        var locationTexCoords = GL.GetAttribLocation(ShaderHandle, "vertexTexCoords");
-        OpenGLUtils.InitializeVertices(ShaderHandle, locationVertices, locationTexCoords);
-        
-        // prepare a slide texture
-        TextureHandle = OpenGLUtils.AllocateTexture();
-    }
-
     private void GetPlaybackSequence()
     {
         // Each window stores its own separate playback sequence which the show references.
@@ -300,6 +281,25 @@ public class SlideWindow : IDisposable
         }
     }
 
+    private void RenderInit()
+    {
+        GL.UseProgram(ShaderHandle);
+        
+        // find the frag uniforms
+        UniformSlide = GL.GetUniformLocation(ShaderHandle, "slide");
+        UniformResolution = GL.GetUniformLocation(ShaderHandle, "resolution");
+        UniformImageSize = GL.GetUniformLocation(ShaderHandle, "imagesize");
+        UniformSizeMode = GL.GetUniformLocation(ShaderHandle, "sizemode");
+        
+        // prepare the vertex stage
+        var locationVertices = GL.GetAttribLocation(ShaderHandle, "vertices");
+        var locationTexCoords = GL.GetAttribLocation(ShaderHandle, "vertexTexCoords");
+        OpenGLUtils.InitializeVertices(ShaderHandle, locationVertices, locationTexCoords);
+        
+        // prepare a slide texture
+        TextureHandle = OpenGLUtils.AllocateTexture();
+    }
+
     private void Render()
     {
         if (ShaderHandle == -1) return;
@@ -311,15 +311,9 @@ public class SlideWindow : IDisposable
         
         GL.UseProgram(ShaderHandle);
 
-        unsafe
-        {
-            GL.ActiveTexture(TextureUnit.Texture0);
-            GL.BindTexture(TextureTarget.Texture2D, TextureHandle);
-            fixed (byte* ptr = Slide.Data)
-            {
-                GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, Slide.Width, Slide.Height, PixelFormat.Rgba, PixelType.Byte, (IntPtr)ptr);
-            }
-        }
+        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.BindTexture(TextureTarget.Texture2D, TextureHandle);
+        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, Slide.Width, Slide.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, Slide.Data);
 
         ImageSize = new Vector2(Slide.Width, Slide.Height);
         GL.Uniform1(UniformSlide, TextureUnit.Texture0.ToOrdinal());

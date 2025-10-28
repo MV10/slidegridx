@@ -15,10 +15,14 @@
 
     <ItemGroup>
       <None Remove="sample.sgx" />
+      <None Remove="sample_winpaths.sgx" />
       <Content Include="sample.sgx">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
       <None Remove="slide.frag" />
+      <Content Include="sample_winpaths.sgx">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
       <Content Include="slide.frag">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
