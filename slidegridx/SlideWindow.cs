@@ -16,6 +16,9 @@ public class SlideWindow : IDisposable
     public DateTime NextAdvance = DateTime.MaxValue;
 
     private int ShaderHandle = -1;
+    private int ElementBufferObject = -1;
+    private int VertexBufferObject = -1;
+    private int VertexArrayObject = -1;
     private int TextureHandle = -1;
     private int UniformSlide = -1;
     private int UniformResolution = -1;
@@ -303,7 +306,7 @@ public class SlideWindow : IDisposable
         // prepare the vertex stage
         var locationVertices = GL.GetAttribLocation(ShaderHandle, "vertices");
         var locationTexCoords = GL.GetAttribLocation(ShaderHandle, "vertexTexCoords");
-        OpenGLUtils.InitializeVertices(ShaderHandle, locationVertices, locationTexCoords);
+        (VertexArrayObject, VertexBufferObject, ElementBufferObject) = OpenGLUtils.InitializeVertices(ShaderHandle, locationVertices, locationTexCoords);
         
         // prepare a slide texture
         TextureHandle = OpenGLUtils.AllocateTexture();
@@ -318,11 +321,11 @@ public class SlideWindow : IDisposable
         GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GL.Clear(ClearBufferMask.ColorBufferBit);
         
-        GL.UseProgram(ShaderHandle);
-
         GL.ActiveTexture(TextureUnit.Texture0);
         GL.BindTexture(TextureTarget.Texture2D, TextureHandle);
         GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, Slide.Width, Slide.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, Slide.Data);
+
+        GL.UseProgram(ShaderHandle);
 
         ImageSize = new Vector2(Slide.Width, Slide.Height);
         GL.Uniform1(UniformSlide, TextureUnit.Texture0.ToOrdinal());
@@ -330,7 +333,7 @@ public class SlideWindow : IDisposable
         GL.Uniform2(UniformImageSize, ImageSize);
         GL.Uniform1(UniformSizeMode, SizeMode);
         
-        GL.BindVertexArray(OpenGLUtils.VertexArrayObject);
+        GL.BindVertexArray(VertexArrayObject);
         GL.DrawElements(PrimitiveType.Triangles, OpenGLUtils.Indices.Length, DrawElementsType.UnsignedInt, 0);
         
         Window.Context.SwapBuffers();
@@ -338,6 +341,15 @@ public class SlideWindow : IDisposable
     
     public void Dispose()
     {
+        if (VertexBufferObject != -1) GL.DeleteBuffer(VertexBufferObject);
+        VertexArrayObject = -1;
+        
+        if (ElementBufferObject != -1) GL.DeleteBuffer(ElementBufferObject);
+        ElementBufferObject = -1;
+        
+        if (VertexArrayObject != -1) GL.DeleteVertexArray(VertexArrayObject);
+        VertexArrayObject = -1;
+        
         if (TextureHandle != -1) GL.DeleteTexture(TextureHandle);
         TextureHandle = -1;
         

@@ -52,7 +52,7 @@
 #    Automatic
 #    Manual
 #
-# ResizeMode
+# ResizeMode (currently ignored; always sizes to fit, retaining aspect)
 #    LargestDimension
 #    ByWidth
 #    ByHeight

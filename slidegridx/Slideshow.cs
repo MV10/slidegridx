@@ -31,7 +31,7 @@ public static class Slideshow
             var win = new SlideWindow(grid);
             if (win.Window is null)
             {
-                Console.WriteLine($"failed to create window for grid ({grid.X},{grid.Y}),({grid.W},{grid.H})");
+                Console.WriteLine($"failed to create window for grid #{grid.Id}: ({grid.X},{grid.Y})-({grid.W},{grid.H})");
                 Dispose();
                 Environment.Exit(1);
             }
@@ -49,20 +49,17 @@ public static class Slideshow
             NativeWindow.ProcessWindowEvents(waitForEvents: false);
 
             // exiting?
-            unsafe
+            foreach (var win in windows)
             {
-                foreach (var win in windows)
+                if (win.Window.KeyboardState.IsKeyReleased(Keys.Escape))
                 {
-                    if (win.Window.KeyboardState.IsKeyReleased(Keys.Escape) || GLFW.WindowShouldClose(win.Window.WindowPtr))
-                    {
-                        running = false;
-                        break;
-                    }
+                    running = false;
+                    break;
                 }
             }
             if (!running) continue;
 
-            // process inputs
+            // TODO process inputs
             
             // auto-advance
             foreach (var win in windows)
@@ -80,7 +77,6 @@ public static class Slideshow
         SortImageData(Config.Content);
         SortImageData(Config.Highlights);
     }
-    
     
     private static void SortImageData(List<ImageData> dataList)
     {
@@ -106,5 +102,4 @@ public static class Slideshow
         windows.Clear();
         GLFW.Terminate();        
     }
-    
 }

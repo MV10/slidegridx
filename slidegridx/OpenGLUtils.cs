@@ -34,10 +34,6 @@ public static class OpenGLUtils
         131222, 131154, // NVIDIA pixel transfer is syncrhonized with 3D rendering
     ];
 
-    public static int ElementBufferObject;
-    public static int VertexBufferObject;
-    public static int VertexArrayObject;
-
     public static int CompileShader()
     {
         int handle = -1;
@@ -115,16 +111,16 @@ public static class OpenGLUtils
         return handle;
     }
     
-    public static void InitializeVertices(int shaderHandle, int locationVertices, int locationTexCoords)
+    public static (int VAO, int VBO, int EBO) InitializeVertices(int shaderHandle, int locationVertices, int locationTexCoords)
     {
-        VertexArrayObject = GL.GenVertexArray();
+        var VertexArrayObject = GL.GenVertexArray();
         GL.BindVertexArray(VertexArrayObject);
 
-        VertexBufferObject = GL.GenBuffer();
+        var VertexBufferObject = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBufferObject);
         GL.BufferData(BufferTarget.ArrayBuffer, OpenGLUtils.Vertices.Length * sizeof(float), OpenGLUtils.Vertices, BufferUsageHint.StaticDraw);
 
-        ElementBufferObject = GL.GenBuffer();
+        var ElementBufferObject = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ElementArrayBuffer, ElementBufferObject);
         GL.BufferData(BufferTarget.ElementArrayBuffer, OpenGLUtils.Indices.Length * sizeof(uint), OpenGLUtils.Indices, BufferUsageHint.StaticDraw);
 
@@ -135,6 +131,8 @@ public static class OpenGLUtils
 
         GL.EnableVertexAttribArray(locationTexCoords);
         GL.VertexAttribPointer(locationTexCoords, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
+        
+        return (VertexArrayObject, VertexBufferObject, ElementBufferObject);
     }
 
     public static int AllocateTexture()
