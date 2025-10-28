@@ -1,0 +1,105 @@
+##########################################################################
+# SlideGridX Config File
+#
+# All content including comments were generated. If you modify the
+# file manually then re-save, any changes will be replaced by the
+# boilerplate content you see here. If any value is omitted, the
+# first listed value is the default, and Shuffle Time defaults to
+# 10 seconds. Any invalid option aborts the file load.
+
+##########################################################################
+# The Playback section settings are as follows:
+#
+# RandomizeMode
+#    Shuffle
+#    Sequential 
+#    SequentialRandomStart
+#    ShuffleSequences
+#
+# SequenceMode
+#    NotSequenced
+#    ByFilename
+#    ByTimestamp
+#
+# HighlightMode
+#    SameAsContent
+#    AlwaysShuffle
+#
+# StaggerMode
+#    Synchronized
+#    Staggered
+#
+# ShuffleTime
+#    seconds, 0.5 or greater (default is 10.0)
+#
+# SequenceLength
+#    default is 5
+#
+# HighlightFrequency
+#    percentage, 1 to 99 (default is 5)
+
+##########################################################################
+# The Grid section contains x,y,w,h,a,r where 'a' is AdvanceMode
+# and 'r' is ResizeMode (below). Grid ID numbers are 0-based and
+# sequential, and no more than 10 are currently supported.
+#
+# Note that some Linux display managers may not allow you to use the full
+# screen area. For example, if you choose a position / size that overlaps
+# the KDE Plasma taskbar, it will change the position and size. You may
+# need to experiment with your specific environment.
+#
+# AdvanceMode
+#    Automatic
+#    Manual
+#
+# ResizeMode
+#    LargestDimension
+#    ByWidth
+#    ByHeight
+
+##########################################################################
+# The Content and Highlights sections are simple lists of fully qualified
+# image pathnames, or a path ending in a '*' wildcard. UNC pathnames are
+# permitted but the application will not prompt for credentials.
+# Supported image formats (by file extension):
+# .jpg, .jpeg, .png, .bmp
+
+##########################################################################
+
+
+[Playback]
+RandomizeMode: ShuffleSequences
+SequenceMode: ByTimestamp
+HighlightMode: AlwaysShuffle
+StaggerMode: Synchronized
+ShuffleTime: 10
+SequenceLength: 7
+HighlightFreq: 15
+
+[Grids]
+0,0,1920,2160,Automatic,LargestDimension
+3840,0,1920,2160,Automatic,LargestDimension
+5760,0,1920,2160,Automatic,LargestDimension
+
+[Content]
+/media/windowsC/Users/Jon/Wallpaper/1984.jpg
+/media/windowsC/Users/Jon/Wallpaper/3D_BW_Cubes_by_evilsteve.jpg
+/media/windowsC/Users/Jon/Wallpaper/3D_Sculpt_Fractal_by_love1008.jpg
+/media/windowsC/Users/Jon/Wallpaper/3_by_sourcake.jpg
+/media/windowsC/Users/Jon/Wallpaper/3_Spheres_by_JorzoR.jpg
+/media/windowsC/Users/Jon/Wallpaper/400k_psy_wall_by_plopmeout.jpg
+/media/windowsC/Users/Jon/Wallpaper/6AM_by_DEZIN.jpg
+/media/windowsC/Users/Jon/Wallpaper/Abstacio_Explosion_by_BlackFireKG.jpg
+/media/windowsC/Users/Jon/Wallpaper/abstractMinimalism_31_by_love1008.jpg
+/media/windowsC/Users/Jon/Wallpaper/Abstract_Apophysis_002_by_Gibson125.jpg
+/media/windowsC/Users/Jon/Wallpaper/Abstract_Blue_by_sabrine_wallpapers.jpg
+/media/windowsC/Users/Jon/Wallpaper/Abstract_Dark_by_sabrine_wallpapers.jpg
+/media/windowsC/Users/Jon/Wallpaper/Abstract_Nebula_by_meosoft.jpg
+/media/windowsC/Users/Jon/Wallpaper/Abstract___Blue_Tubing_by_matt_catt.jpg
+/media/windowsC/Users/Jon/Wallpaper/Acid_Wrought_Excremeditation_by_catastroman.png
+/media/windowsC/Users/Jon/Wallpaper/adrenaline_by_mickern.jpg
+/media/windowsC/Users/Jon/Wallpaper/adventuresome_by_farout49.png
+/media/windowsC/Users/Jon/Wallpaper/Advisory.jpg
+
+[Highlights]
+/media/windowsC/mv10.github.io/assets/*
