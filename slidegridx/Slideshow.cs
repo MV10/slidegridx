@@ -17,6 +17,9 @@ public static class Slideshow
         {
             // GLFW isn't compatible with Wayland, use X11 or XWayland
             GLFW.InitHint(InitHintPlatform.Platform, Platform.X11);
+
+            var env = Environment.GetEnvironmentVariable("XDG_SESSION_TYPE") ?? string.Empty;
+            if (env.ToLowerInvariant().Equals("wayland")) Console.WriteLine("wayland may be unreliable; if images are blank, try X11");
         }
 
         if (!GLFW.Init())
