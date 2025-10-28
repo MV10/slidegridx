@@ -84,6 +84,7 @@ public class SlideWindow : IDisposable
         AutoAdvance = (ForGrid.AdvanceMode == GridAdvanceMode.Automatic);
 
         GetPlaybackSequence();
+
         PlaybackIndex = 0;
         ReloadAll();
         SetNextAdvanceTime();
@@ -105,6 +106,10 @@ public class SlideWindow : IDisposable
         // and highlight-only display modes. Because there is no "negative zero" which would
         // make it impossible to reference Highlights[0] in this scheme, int.MinValue is used
         // to represent that special case.
+        
+        // All Content items are guaranteed to be included. For short Content lists, some or
+        // even none of the Highlights may appear as those sequences are added randomly
+        // according to the HighlightFreq percentage-chance setting.
 
         var seqlen = (Config.RandomizeMode != PlaybackRandomizeMode.Shuffle) ? Config.SequenceLength : 1;
         var contentIDs = Enumerable.Range(0, Config.Content.Count).ToList();
@@ -142,7 +147,7 @@ public class SlideWindow : IDisposable
 
                 var storedIndex = target[index] * multiplier;
 
-                // special case for Higlights[0] since "negative zero" isn't possible
+                // special case for Highlights[0] since "negative zero" isn't possible
                 if (storedIndex == 0 && multiplier == -1) storedIndex = int.MinValue;
 
                 PlaybackSequence.Add(storedIndex);
@@ -258,18 +263,22 @@ public class SlideWindow : IDisposable
 
         if (!changeHighlightsMode)
         {
-            if (advance == +1) SlidePrev = Slide;
-            if (advance == -1) SlideNext = Slide;
-
-            if (advance == +1) Slide = SlideNext;
-            if (advance == -1) Slide = SlidePrev;
-
-            if (advance != 0)
+            if (advance == +1)
             {
+                SlidePrev = Slide;
+                Slide = SlideNext;
                 var index = PlaybackIndex;
                 AdvanceIndex(ref index, advance);
-                if (advance == +1) SlideNext = LoadImage(ResolvePathname(index));
-                if (advance == -1) SlidePrev = LoadImage(ResolvePathname(index));
+                SlideNext = LoadImage(ResolvePathname(index));
+            }
+
+            if (advance == -1)
+            {
+                SlideNext = Slide;
+                Slide = SlidePrev;
+                var index = PlaybackIndex;
+                AdvanceIndex(ref index, advance);
+                SlidePrev = LoadImage(ResolvePathname(index));
             }
 
             Render();
