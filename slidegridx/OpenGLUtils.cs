@@ -43,8 +43,8 @@ public static class OpenGLUtils
         // load
         try
         {
-            var vertCode = File.ReadAllText("slide.vert");
-            var fragCode = File.ReadAllText("slide.frag");
+            var vertCode = File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"slide.vert"));
+            var fragCode = File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"slide.frag"));
             vertId = GL.CreateShader(ShaderType.VertexShader);
             GL.ShaderSource(vertId, vertCode);
             fragId = GL.CreateShader(ShaderType.FragmentShader);
