@@ -34,6 +34,10 @@ public static class Slideshow
         // create a window for each grid location
         foreach (var grid in Config.Grids)
         {
+            // the application switches context frequently, which is normally slow; setting
+            // KHR_context_flush_control to None should significantly improve response time
+            GLFW.WindowHint(WindowHintReleaseBehavior.ContextReleaseBehavior, ReleaseBehavior.None);
+            
             var win = new SlideWindow(grid);
             if (win.Window is null)
             {
