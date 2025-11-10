@@ -81,6 +81,11 @@ public class SlideWindow : IDisposable
         }
 
         RenderInit();
+
+        // For some reason the GLFW client size is not immediately updated, so this
+        // ensures Resolution gets the actual client size every time... it probably
+        // doesn't work on all systems but "It Works On My Machine"...
+        Thread.Sleep(100);
         
         Resolution = Window.ClientSize;
         SizeMode = (int)ForGrid.ResizeMode;
@@ -208,7 +213,8 @@ public class SlideWindow : IDisposable
         try
         {
             using var stream = File.OpenRead(pathname);
-            return ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
+            var i= ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
+            return i;
         }
         catch
         {
