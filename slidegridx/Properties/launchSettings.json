@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "slidegridx": {
+      "commandName": "Project",
+      "commandLineArgs": "sample.sgx"
+    }
+  }
+}

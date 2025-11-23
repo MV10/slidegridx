@@ -18,7 +18,7 @@ public static class Slideshow
         
         if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            // GLFW isn't compatible with Wayland, use X11 or XWayland
+            // NVIDIA driver has a known Wayland bug (textures are often blank), try to use X11 or XWayland
             GLFW.InitHint(InitHintPlatform.Platform, Platform.X11);
 
             var env = Environment.GetEnvironmentVariable("XDG_SESSION_TYPE") ?? string.Empty;

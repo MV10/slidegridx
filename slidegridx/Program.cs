@@ -1,4 +1,5 @@
 ﻿
+using System.Runtime.InteropServices;
 
 namespace slidegridx;
 
@@ -37,5 +38,13 @@ ENTER  Toggle highlight-only
 ");
 
         Slideshow.Play();
+    }
+
+    public static void LinuxSleep(int milliseconds = 100)
+    {
+        // On Linux the window compositor is asynchronous, so
+        // not all window operations happen immediately. The win32
+        // API is synchronous so this is not necessary.
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) Thread.Sleep(milliseconds);
     }
 }

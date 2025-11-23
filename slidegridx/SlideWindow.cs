@@ -63,12 +63,15 @@ public class SlideWindow : IDisposable
         // When testing in KDE Plasma, the window manager won't allow overlap with the taskbars
         // and that triggers some default size and location. If we set AlwaysOnTop then reapply
         // the location and size, it seems to "stick" and we can then disable AlwaysOnTop.
+        Program.LinuxSleep();
         if (Window.Location != xy || Window.ClientSize != wh)
         {
             Window.AlwaysOnTop = true;
             Window.Location = xy;
             Window.ClientSize = wh;
             Window.AlwaysOnTop = false;
+
+            Program.LinuxSleep();
             if (Window.Location != xy || Window.ClientSize != wh) Console.WriteLine($"system changed grid #{ForGrid.Id} from {xy}-{wh} to {Window.Location}-{Window.ClientSize}");
         }
 
@@ -81,18 +84,11 @@ public class SlideWindow : IDisposable
         }
 
         RenderInit();
-
-        // For some reason the GLFW client size is not immediately updated, so this
-        // ensures Resolution gets the actual client size every time... it probably
-        // doesn't work on all systems but "It Works On My Machine"...
-        Thread.Sleep(100);
-        
         Resolution = Window.ClientSize;
         SizeMode = (int)ForGrid.ResizeMode;
         AutoAdvance = (ForGrid.AdvanceMode == GridAdvanceMode.Automatic);
 
         GetPlaybackSequence();
-
         PlaybackIndex = 0;
         ReloadAll();
         SetNextAdvanceTime();
@@ -100,14 +96,14 @@ public class SlideWindow : IDisposable
 
     public void Next()
     {
-        ShowSlide(+1);
         SetNextAdvanceTime();
+        ShowSlide(+1);
     }
 
     public void Previous()
     {
-        ShowSlide(-1);
         SetNextAdvanceTime();
+        ShowSlide(-1);
     }
 
     public void ToggleManualAdvance()
@@ -319,6 +315,11 @@ public class SlideWindow : IDisposable
 
     private void RenderInit()
     {
+        Window.MakeCurrent();
+        
+        GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        GL.Clear(ClearBufferMask.ColorBufferBit);
+
         GL.UseProgram(ShaderHandle);
         
         // find the frag uniforms

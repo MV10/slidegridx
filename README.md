@@ -19,9 +19,10 @@ Currently, all images are zoomed to their display region with correct aspect rat
 
 The program supports JPG, PNG, GIF, and BMP files.
 
-Expand the tar archive (binaries-yyyy-mm-dd.tar.gz) to a directory, install .NET8, and give `slidegridx` execute permissions:
+Expand the tar archive (binaries-yyyy-mm-dd.tar.gz) to a directory, [install .NET8](https://learn.microsoft.com/en-us/dotnet/core/install/linux), and give `slidegridx` execute permissions:
 
 ```shell
+# you may need to add Microsoft to your apt source list
 sudo apt install -y dotnet-runtime-8.0
 chmod +x slidegridx
 ```
@@ -32,8 +33,10 @@ chmod +x slidegridx
 ./slidegridx sample.sgx
 ```
 
-Requires OpenGL 4.5, and X11 is probably more reliable than Wayland.
-
 Pull-requests are welcome.
 
-Technically this code is compatible with Windows, too, but my [slidegrid](https://github.com/MV10/slidegrid) project provides a Windows GUI.
+Requires OpenGL 4.5, and X11 is probably more reliable than Wayland. It will attempt to use XWayland if X11 is not available. If you see blank grid squares on Wayland, it's probably a known NVIDIA driver bug and only X11 will fix it. Isn't Linux fun?
+
+Another quirk of Linux is that the window compositor is asynchronous and OpenGL context-switching is very slow. The individual grid squares are separate windows, so it's almost impossible to force synchronization.
+
+Technically this code is compatible with Windows, too, but my [slidegrid](https://github.com/MV10/slidegrid) project provides a Windows GUI (with native Windows API rather than OpenGL, so it is highly responsive).

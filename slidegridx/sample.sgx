@@ -1,11 +1,14 @@
 ##########################################################################
 # SlideGridX Config File
 #
-# All content including comments were generated. If you modify the
-# file manually then re-save, any changes will be replaced by the
-# boilerplate content you see here. If any value is omitted, the
-# first listed value is the default, and Shuffle Time defaults to
-# 10 seconds. Any invalid option aborts the file load.
+# If any value is omitted, the  first listed value is the default, and
+# Shuffle Time defaults to 10 seconds. Any invalid option aborts the file
+# load. Note that StaggerMode Synchronized on Linux will probably not
+# exhibit perfect synchronization because the window compositors (X11 or
+# Wayland) are inherently asynchronous. The program also sets the GLFW
+# X11 hint which should result in XWayland being used if you are not using
+# X11 directly. This addresses a known NVIDIA driver bug where textures do
+# not render correctly. If you see black grid squares, try using X11.
 
 ##########################################################################
 # The Playback section settings are as follows:
@@ -77,29 +80,18 @@ SequenceLength: 7
 HighlightFreq: 15
 
 [Grids]
-0,0,1920,2160,Automatic,LargestDimension
-3840,0,1920,2160,Automatic,LargestDimension
-5760,0,1920,2160,Automatic,LargestDimension
+   0,   0,1280,720,Automatic,LargestDimension
+1280,   0,1280,720,Automatic,LargestDimension
+2560,   0,1280,720,Automatic,LargestDimension
+   0, 720,1280,720,Automatic,LargestDimension
+1280, 720,1280,720,Automatic,LargestDimension
+2560, 720,1280,720,Automatic,LargestDimension
+   0,1440,1280,720,Automatic,LargestDimension
+1280,1440,1280,720,Automatic,LargestDimension
+2560,1440,1280,720,Automatic,LargestDimension
 
 [Content]
-/media/windowsC/Users/Jon/Wallpaper/1984.jpg
-/media/windowsC/Users/Jon/Wallpaper/3D_BW_Cubes_by_evilsteve.jpg
-/media/windowsC/Users/Jon/Wallpaper/3D_Sculpt_Fractal_by_love1008.jpg
-/media/windowsC/Users/Jon/Wallpaper/3_by_sourcake.jpg
-/media/windowsC/Users/Jon/Wallpaper/3_Spheres_by_JorzoR.jpg
-/media/windowsC/Users/Jon/Wallpaper/400k_psy_wall_by_plopmeout.jpg
-/media/windowsC/Users/Jon/Wallpaper/6AM_by_DEZIN.jpg
-/media/windowsC/Users/Jon/Wallpaper/Abstacio_Explosion_by_BlackFireKG.jpg
-/media/windowsC/Users/Jon/Wallpaper/abstractMinimalism_31_by_love1008.jpg
-/media/windowsC/Users/Jon/Wallpaper/Abstract_Apophysis_002_by_Gibson125.jpg
-/media/windowsC/Users/Jon/Wallpaper/Abstract_Blue_by_sabrine_wallpapers.jpg
-/media/windowsC/Users/Jon/Wallpaper/Abstract_Dark_by_sabrine_wallpapers.jpg
-/media/windowsC/Users/Jon/Wallpaper/Abstract_Nebula_by_meosoft.jpg
-/media/windowsC/Users/Jon/Wallpaper/Abstract___Blue_Tubing_by_matt_catt.jpg
-/media/windowsC/Users/Jon/Wallpaper/Acid_Wrought_Excremeditation_by_catastroman.png
-/media/windowsC/Users/Jon/Wallpaper/adrenaline_by_mickern.jpg
-/media/windowsC/Users/Jon/Wallpaper/adventuresome_by_farout49.png
-/media/windowsC/Users/Jon/Wallpaper/Advisory.jpg
+/data/Wallpaper/*
 
 [Highlights]
-/media/windowsC/mv10.github.io/assets/headers/*
+/data/memes/*
