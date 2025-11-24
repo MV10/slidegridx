@@ -22,19 +22,21 @@ public class SlideManager
         AutoAdvance = (ForGrid.AdvanceMode == GridAdvanceMode.Automatic);
         GetPlaybackSequence();
         PlaybackIndex = 0;
-        // caller: await ReloadAll(true) after ctor
+        // parent should call ReloadAll(true) after constructor
     }
 
-    public async Task Next()
+    public Task Next()
     {
         SetNextAdvanceTime();
-        await ShowSlide(+1);
+        _ = ShowSlide(+1);
+        return Task.CompletedTask;
     }
 
-    public async Task Previous()
+    public Task Previous()
     {
         SetNextAdvanceTime();
-        await ShowSlide(-1);
+        _ = ShowSlide(-1);
+        return Task.CompletedTask;
     }
 
     public void ToggleManualAdvance()
@@ -43,13 +45,14 @@ public class SlideManager
         SetNextAdvanceTime();
     }
 
-    public async Task ToggleHighlightsOnly()
+    public Task ToggleHighlightsOnly()
     {
         HighlightsOnly = !HighlightsOnly;
-        await ReloadAll();
+        _ = ReloadAll();
+        return Task.CompletedTask;
     }
 
-    public async Task ReloadAll(bool setNextAdvanceTime = false)
+    public Task ReloadAll(bool setNextAdvanceTime = false)
     {
         // To attach a debugger to a child process, set a breakpoint here.
         // This is the first time a call is made to any child process.
@@ -58,19 +61,22 @@ public class SlideManager
         // ChildProcessProxy, then switch back to this debugger and resume.
         
         var pathname = ResolvePathname(PlaybackIndex);
-        await ForGrid.ParentIPC.InvokeAsync(child => child.SetVisible(pathname));
+        _ = ForGrid.ParentIPC.InvokeAsync(child => child.SetVisible(pathname));
+        // child.SetVisible will request a render
 
         var index = PlaybackIndex;
         AdvanceIndex(ref index, -1);
-        pathname = ResolvePathname(PlaybackIndex);
-        await ForGrid.ParentIPC.InvokeAsync(child => child.SetPrev(pathname));
+        pathname = ResolvePathname(index);
+        _ = ForGrid.ParentIPC.InvokeAsync(child => child.SetPrev(pathname));
 
         index = PlaybackIndex;
         AdvanceIndex(ref index, +1);
-        pathname = ResolvePathname(PlaybackIndex);
-        await ForGrid.ParentIPC.InvokeAsync(child => child.SetNext(pathname));
+        pathname = ResolvePathname(index);
+        _ = ForGrid.ParentIPC.InvokeAsync(child => child.SetNext(pathname));
 
         if (setNextAdvanceTime) SetNextAdvanceTime();
+
+        return Task.CompletedTask;
     }
 
     private void GetPlaybackSequence()
@@ -197,7 +203,7 @@ public class SlideManager
         AutoAdvanceTime = DateTime.Now.AddSeconds(Config.ShuffleTime + stagger);
     }
 
-    private async Task ShowSlide(int direction = 0, bool changeHighlightsMode = false)
+    private Task ShowSlide(int direction = 0, bool changeHighlightsMode = false)
     {
         // advance should be 0 when changing highlights mode, but index can
         // still change if the current index is not already a highlight image
@@ -208,30 +214,26 @@ public class SlideManager
         {
             if (direction == +1)
             {
-                //SlidePrev = SlideVisible;
-                //SlideVisible = SlideNext;
                 var index = PlaybackIndex;
                 AdvanceIndex(ref index, direction);
-                //SlideNext = LoadImage(ResolvePathname(index));
-                await ForGrid.ParentIPC.InvokeAsync(child => child.Advance(direction, ResolvePathname(index)));
+                _ = ForGrid.ParentIPC.InvokeAsync(child => child.Advance(direction, ResolvePathname(index)));
             }
 
             if (direction == -1)
             {
-                //SlideNext = SlideVisible;
-                //SlideVisible = SlidePrev;
                 var index = PlaybackIndex;
                 AdvanceIndex(ref index, direction);
-                //SlidePrev = LoadImage(ResolvePathname(index));
-                await ForGrid.ParentIPC.InvokeAsync(child => child.Advance(direction, ResolvePathname(index)));
+                _ = ForGrid.ParentIPC.InvokeAsync(child => child.Advance(direction, ResolvePathname(index)));
             }
 
-            // should render
+            // child.Advance will request a render
         }
         else
         {
-            // reload all three when changing highlights mode
-            await ReloadAll();
+            // reload all three and render when changing highlights mode
+            _ = ReloadAll();
         }
+
+        return Task.CompletedTask;
     }
 }

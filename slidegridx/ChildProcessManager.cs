@@ -23,14 +23,14 @@ public static class ChildProcessManager
     // OpenGL and GLFW are not thread-safe. They MUST run from "the main thread"
     // which in this case is thread #1. Child processes must create and manage a
     // synchronization context. NO async code can run before MainLoop starts,
-    // and ALL async code can ONLY run in the "async OffMainThread" method.
+    // and ALL async code can ONLY run in the "async OffMainThread" method. (Most
+    // are actually fire-and-forget, but we must await the pipe connection.)
     public static Task Run()
     {
         ForGrid = Config.Grids[GridNumber];
 
         try
         {
-            Console.WriteLine($"child {GridNumber} creating window from thread {Environment.CurrentManagedThreadId}");
             Window = new SlideWindow();
 
             SyncContext = new MainThreadSynchronizationContext();
@@ -46,7 +46,7 @@ public static class ChildProcessManager
                 // Safe to invoke OpenGL or GLFW
                 if (RenderRequired == 1)
                 {
-                    Console.WriteLine($"child {GridNumber} render {DateTime.Now:HH:mm:ss.ffff}");
+                    //Console.WriteLine($"child {GridNumber} render {DateTime.Now:HH:mm:ss.ffff}");
                     Interlocked.Exchange(ref RenderRequired, 0);
                     Window.Render();
                     continue;
@@ -85,38 +85,42 @@ public static class ChildProcessManager
             await ForGrid.ChildIPC.ConnectAsync();
         }
         
-        await SendKeyIfReleased(keyboard, Keys.Escape);
-        await SendKeyIfReleased(keyboard, Keys.Space);
-        await SendKeyIfReleased(keyboard, Keys.GraveAccent);
-        await SendKeyIfReleased(keyboard, Keys.Left);
-        await SendKeyIfReleased(keyboard, Keys.Right);
+        _ = SendKeyIfReleased(keyboard, Keys.Escape);         // quit
+        _ = SendKeyIfReleased(keyboard, Keys.Space);          // toggle manual
+        _ = SendKeyIfReleased(keyboard, Keys.Enter);          // toggle highlights
+        _ = SendKeyIfReleased(keyboard, Keys.GraveAccent);    // toggle all-windows
+        _ = SendKeyIfReleased(keyboard, Keys.Left);           // previous
+        _ = SendKeyIfReleased(keyboard, Keys.Right);          // next
 
-        await SendMouseIfReleased(mouse, MouseButton.Left);
-        await SendMouseIfReleased(mouse, MouseButton.Right);
-        await SendMouseIfScrolled(mouse);
+        _ = SendMouseIfReleased(mouse, MouseButton.Left);
+        _ = SendMouseIfReleased(mouse, MouseButton.Right);
+        _ = SendMouseIfScrolled(mouse);
     }
 
-    private static async Task SendKeyIfReleased(KeyboardState keyboardState, Keys key)
+    private static Task SendKeyIfReleased(KeyboardState keyboardState, Keys key)
     {
         if (keyboardState.IsKeyReleased(key))
         {
-            await ForGrid.ChildIPC.InvokeAsync(parent => parent.Keystroke(GridNumber, key));
+            _ = ForGrid.ChildIPC.InvokeAsync(parent => parent.Keystroke(GridNumber, key));
         }
+        return Task.CompletedTask;
     }
 
-    private static async Task SendMouseIfReleased(MouseState mouseState, MouseButton button)
+    private static Task SendMouseIfReleased(MouseState mouseState, MouseButton button)
     {
         if (mouseState.IsButtonReleased(button))
         {
-            await ForGrid.ChildIPC.InvokeAsync(parent => parent.MouseClick(GridNumber, button));
+            _ = ForGrid.ChildIPC.InvokeAsync(parent => parent.MouseClick(GridNumber, button));
         }
+        return Task.CompletedTask;
     }
 
-    private static async Task SendMouseIfScrolled(MouseState mouseState)
+    private static Task SendMouseIfScrolled(MouseState mouseState)
     {
         if (mouseState.ScrollDelta.Y != 0)
         {
-            await ForGrid.ChildIPC.InvokeAsync(parent => parent.MouseWheel(GridNumber, mouseState.ScrollDelta.Y));
+            _ = ForGrid.ChildIPC.InvokeAsync(parent => parent.MouseWheel(GridNumber, mouseState.ScrollDelta.Y));
         }
+        return Task.CompletedTask;
     }
 }

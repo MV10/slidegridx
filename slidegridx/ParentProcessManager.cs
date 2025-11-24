@@ -1,6 +1,5 @@
 
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using PipeMethodCalls;
 
 namespace slidegridx;
 
@@ -24,6 +23,11 @@ public class ParentProcessManager : IParentProcess
         foreach (var grid in Config.Grids)
         {
             grid.Slide = new SlideManager(grid);
+        }
+        
+        // initialize graphics for each slide and window
+        foreach (var grid in Config.Grids)
+        {
             _ = grid.Slide.ReloadAll(setNextAdvanceTime: true);
         }
 

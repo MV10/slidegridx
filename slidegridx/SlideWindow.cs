@@ -113,23 +113,19 @@ public class SlideWindow : IDisposable, IChildProcess
     public void SetVisible(string pathname)
     {
         if (IsDisposed) return;
-        
         SlideVisible = LoadImage(pathname);
-
         Interlocked.Exchange(ref ChildProcessManager.RenderRequired, 1);
     }
 
     public void SetNext(string pathname)
     {
         if (IsDisposed) return;
-        
         SlideNext = LoadImage(pathname);
     }
 
     public void SetPrev(string pathname)
     {
         if (IsDisposed) return;
-        
         SlidePrev = LoadImage(pathname);
     }
 
