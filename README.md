@@ -37,6 +37,6 @@ Pull-requests are welcome.
 
 Requires OpenGL 4.5, and X11 is probably more reliable than Wayland. It will attempt to use XWayland if X11 is not available. If you see blank grid squares on Wayland, it's probably a known NVIDIA driver bug and only X11 will fix it. Isn't Linux fun?
 
-Another quirk of Linux is that the window compositor is asynchronous and OpenGL context-switching is very slow. The individual grid squares are separate windows, so it's almost impossible to force synchronization.
+Another quirk of Linux is that the window compositor is asynchronous but OpenGL is synchronous. The individual grid squares are separate windows, so it's almost impossible to force perfect synchronization. My test data is 9 grid squares loading wallpaper images up to 2K in size, and they all update in about 0.5 seconds. 
 
 Technically this code is compatible with Windows, too, but my [slidegrid](https://github.com/MV10/slidegrid) project provides a Windows GUI (with native Windows API rather than OpenGL, so it is highly responsive).

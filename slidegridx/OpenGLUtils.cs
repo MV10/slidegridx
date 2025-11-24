@@ -171,6 +171,6 @@ public static class OpenGLUtils
 
         Console.WriteLine($"OpenGL Error:\n[{errSev}] source={errSource} type={errType} id={id}\n{message}\n{stack}");
         
-        //Debugger.Break();
+        // Debugger.Break();
     }
 }

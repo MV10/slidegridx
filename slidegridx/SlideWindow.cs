@@ -1,19 +1,23 @@
 
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using StbImageSharp;
 
 namespace slidegridx;
-        
-// These are the same algorithms used in the Windows GUI-based slidegrid.
 
-public class SlideWindow : IDisposable
+// This is only created and used by a child process. Dispose
+// is actually never called because the parent process simply
+// kills the child process outright.
+
+public class SlideWindow : IDisposable, IChildProcess
 {
-    public NativeWindow Window { get; private set; }
-    public Grid ForGrid { get; private set; }
-    public DateTime AutoAdvanceTime = DateTime.MaxValue;
+    private NativeWindow Window { get; set; }
+    private Grid ForGrid { get; set; }
 
     private int ShaderHandle = -1;
     private int ElementBufferObject = -1;
@@ -24,29 +28,47 @@ public class SlideWindow : IDisposable
     private int UniformResolution = -1;
     private int UniformImageSize = -1;
     private int UniformSizeMode = -1;
-    
-    private Random random = new();
-    private List<int> PlaybackSequence = new();
-    private bool AutoAdvance = false;
-    private bool HighlightsOnly = false;
 
-    private ImageResult Slide;
+    private ImageResult SlideVisible;
     private ImageResult SlidePrev;
     private ImageResult SlideNext;
-    private int PlaybackIndex;
 
     private Vector2 Resolution;
     private Vector2 ImageSize;
     private int SizeMode;
 
     private static DebugProcKhr DebugMessageDelegate = OpenGLUtils.ErrorCallback;
-    
-    public SlideWindow(Grid grid)
+
+    public SlideWindow()
     {
-        ForGrid = grid;
+        Debug.WriteLine($"child window {ChildProcessManager.GridNumber} constructor running on thread {Environment.CurrentManagedThreadId}");
+        ForGrid = Config.Grids[ChildProcessManager.GridNumber];
         
         var xy = new Vector2i(ForGrid.X, ForGrid.Y);
         var wh = new Vector2i(ForGrid.W, ForGrid.H);
+
+        if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            // NVIDIA driver has a known Wayland bug (textures are often blank), try to use X11 or XWayland
+            GLFW.InitHint(InitHintPlatform.Platform, Platform.X11);
+
+            var env = Environment.GetEnvironmentVariable("XDG_SESSION_TYPE") ?? string.Empty;
+            if (env.ToLowerInvariant().Equals("wayland")) Console.WriteLine("wayland may be unreliable; if images are blank, try X11");
+        }
+
+        // the application switches context frequently, which is normally slow; setting
+        // KHR_context_flush_control to None should significantly improve response time
+        GLFW.WindowHint(WindowHintReleaseBehavior.ContextReleaseBehavior, ReleaseBehavior.None);
+
+        // Since console programs don't have a SynchronizationContext, the use of await prior to
+        // this point means that we're most likely not on the main thread (managed thread ID #1).
+        //GLFWProvider.CheckForMainThread = false; // only applies to OpenTK's GameWindow?
+
+        if (!GLFW.Init())
+        {
+            Console.WriteLine("failed to initialize GLFW");
+            Environment.Exit(1);
+        }
         
         var settings = new NativeWindowSettings
         {
@@ -86,121 +108,107 @@ public class SlideWindow : IDisposable
         RenderInit();
         Resolution = Window.ClientSize;
         SizeMode = (int)ForGrid.ResizeMode;
-        AutoAdvance = (ForGrid.AdvanceMode == GridAdvanceMode.Automatic);
-
-        GetPlaybackSequence();
-        PlaybackIndex = 0;
-        ReloadAll();
-        SetNextAdvanceTime();
     }
 
-    public void Next()
+    public void SetVisible(string pathname)
     {
-        SetNextAdvanceTime();
-        ShowSlide(+1);
+        if (IsDisposed) return;
+        SlideVisible = LoadImage(pathname);
+        Interlocked.Exchange(ref ChildProcessManager.RenderRequired, 1);
     }
 
-    public void Previous()
+    public void SetNext(string pathname)
     {
-        SetNextAdvanceTime();
-        ShowSlide(-1);
+        if (IsDisposed) return;
+        SlideNext = LoadImage(pathname);
     }
 
-    public void ToggleManualAdvance()
+    public void SetPrev(string pathname)
     {
-        AutoAdvance = !AutoAdvance;
-        SetNextAdvanceTime();
+        if (IsDisposed) return;
+        SlidePrev = LoadImage(pathname);
     }
 
-    public void ToggleHighlightsOnly()
+    public void Advance(int direction, string pathname)
     {
-        HighlightsOnly = !HighlightsOnly;
-        ReloadAll();
-    }
-
-    private void GetPlaybackSequence()
-    {
-        // Each window stores its own separate playback sequence which the show references.
-        // The entire playlist series is pre-determined. The PlaybackSequence list of
-        // integers identifies the Content index (positive) or Highlights index (negative)
-        // to be played. This way, it is possible to manually step forwards and backwards
-        // through the entire sequence at any time, and also to toggle between content-only
-        // and highlight-only display modes. Because there is no "negative zero" which would
-        // make it impossible to reference Highlights[0] in this scheme, int.MinValue is used
-        // to represent that special case.
+        if (IsDisposed) return;
         
-        // All Content items are guaranteed to be included. For short Content lists, some or
-        // even none of the Highlights may appear as those sequences are added randomly
-        // according to the HighlightFreq percentage-chance setting.
-
-        var seqlen = (Config.RandomizeMode != PlaybackRandomizeMode.Shuffle) ? Config.SequenceLength : 1;
-        var contentIDs = Enumerable.Range(0, Config.Content.Count).ToList();
-        var highlightIDs = Config.Highlights.Count > 0 ? Enumerable.Range(0, Config.Highlights.Count).ToList() : new List<int>(1);
-        PlaybackSequence.Clear();
-        
-        while (contentIDs.Count > 0)
+        if (direction == +1)
         {
-            List<int> target;
-            int multiplier = 1;
-            
-            // decide if we're adding Highlight index values or Content index values
-            if(contentIDs.Count == 0 || (highlightIDs.Count > 0 && random.Next(1,101) <= Config.HighlightFrequency))
-            {
-                multiplier = -1;
-                target = highlightIDs;
-            }
-            else
-            {
-                multiplier = 1;
-                target = contentIDs;
-            }
+            SlidePrev = SlideVisible;
+            SlideVisible = SlideNext;
+            SlideNext = LoadImage(pathname);
+        }
 
-            // add indexes to the playlist according to the sequence length 
-            var index = random.Next(target.Count);
-            var countdown = random.Next(1, seqlen + 1) + 2;
+        if (direction == -1)
+        {
+            SlideNext = SlideVisible;
+            SlideVisible = SlidePrev;
+            SlidePrev = LoadImage(pathname);
+        }
 
-            while (countdown > 0 && index < target.Count)
-            {
-                // highlights might always be randomized (no sequencing)
-                if (multiplier == -1 && Config.HighlightMode == HighlightPlayback.AlwaysShuffle)
-                {
-                    index = random.Next(target.Count);
-                }
-
-                var storedIndex = target[index] * multiplier;
-
-                // special case for Highlights[0] since "negative zero" isn't possible
-                if (storedIndex == 0 && multiplier == -1) storedIndex = int.MinValue;
-
-                PlaybackSequence.Add(storedIndex);
-
-                // by removing the selected entry, the next item "moves into" the [index] slot
-                // making it the next one added in the sequence in the next pass (unless randomized)
-                target.RemoveAt(index);
-
-                countdown--;
-            }
-
-            // highlights should never "run out"
-            if (Config.Highlights.Count > 0 && highlightIDs.Count == 0)
-            {
-                highlightIDs = Enumerable.Range(0, Config.Highlights.Count).ToList();
-            }
-        }        
+        Interlocked.Exchange(ref ChildProcessManager.RenderRequired, 1);
     }
 
-    private void ReloadAll()
+    public void Render()
     {
-        Slide = LoadImage(ResolvePathname(PlaybackIndex));
+        if (IsDisposed || ShaderHandle == -1 || Window is null || !Window.Exists) return;
 
-        var index = PlaybackIndex;
-        AdvanceIndex(ref index, -1);
-        SlidePrev = LoadImage(ResolvePathname(index));
+        GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        GL.Clear(ClearBufferMask.ColorBufferBit);
+        
+        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.BindTexture(TextureTarget.Texture2D, TextureHandle);
+        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, SlideVisible.Width, SlideVisible.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, SlideVisible.Data);
 
-        index = PlaybackIndex;
-        AdvanceIndex(ref index, +1);
-        SlideNext = LoadImage(ResolvePathname(index));
+        GL.UseProgram(ShaderHandle);
 
+        ImageSize = new Vector2(SlideVisible.Width, SlideVisible.Height);
+        GL.Uniform1(UniformSlide, TextureUnit.Texture0.ToOrdinal());
+        GL.Uniform2(UniformResolution, Resolution);
+        GL.Uniform2(UniformImageSize, ImageSize);
+        GL.Uniform1(UniformSizeMode, SizeMode);
+        
+        GL.BindVertexArray(VertexArrayObject);
+        GL.DrawElements(PrimitiveType.Triangles, OpenGLUtils.Indices.Length, DrawElementsType.UnsignedInt, 0);
+        
+        Window.Context.SwapBuffers();
+    }
+    
+    public (KeyboardState keyboardState, MouseState mouseState) CheckInputs()
+    {
+        Window.NewInputFrame();
+        NativeWindow.ProcessWindowEvents(waitForEvents: false);
+        return (Window.KeyboardState, Window.MouseState);
+    }
+    
+    private void RenderInit()
+    {
+        Window.MakeCurrent();
+
+        GL.UseProgram(ShaderHandle);
+        
+        // find the frag uniforms
+        UniformSlide = GL.GetUniformLocation(ShaderHandle, "slide");
+        UniformResolution = GL.GetUniformLocation(ShaderHandle, "resolution");
+        UniformImageSize = GL.GetUniformLocation(ShaderHandle, "imagesize");
+        UniformSizeMode = GL.GetUniformLocation(ShaderHandle, "sizemode");
+        
+        // prepare the vertex stage
+        var locationVertices = GL.GetAttribLocation(ShaderHandle, "vertices");
+        var locationTexCoords = GL.GetAttribLocation(ShaderHandle, "vertexTexCoords");
+        (VertexArrayObject, VertexBufferObject, ElementBufferObject) = OpenGLUtils.InitializeVertices(ShaderHandle, locationVertices, locationTexCoords);
+        
+        // prepare a slide texture
+        TextureHandle = OpenGLUtils.AllocateTexture();
+
+        // make a blank current slide
+        SlideVisible = new ImageResult
+        {
+            Width = 16,
+            Height = 16,
+            Data = new byte[16 * 16 * 4]
+        };
         Render();
     }
 
@@ -223,149 +231,12 @@ public class SlideWindow : IDisposable
             };
         }
     }
-
-    private string ResolvePathname(int index)
-    {
-        if (PlaybackSequence[index] > -1)
-        {
-            return Config.Content[PlaybackSequence[index]].Pathname;
-        }
-
-        // special case for Highlights[0] since "negative zero" isn't possible
-        var i = PlaybackSequence[index] > int.MinValue ? PlaybackSequence[index] * -1 : 0;
-        return Config.Highlights[i].Pathname;    
-    }
-    
-    private void AdvanceIndex(ref int index, int advance)
-    {
-        // when highlights-only mode is active, the current index is randomly selected,
-        // then it skips forward until it finds a highlight entry; note this means you can't
-        // manually move forward and backward in this mode
-        if(HighlightsOnly)
-        {
-            var nodupe = index;
-            index = random.Next(PlaybackSequence.Count);
-            do
-            {
-                index += 1;
-                WrapIndex(ref index);
-            } while (PlaybackSequence[index] > -1 && index != nodupe);
-        }
-        // otherwise we're just incrementing forward or backwards (or not at all)
-        else
-        {
-            index += advance;
-            WrapIndex(ref index);
-        }
-    }
-    
-    private void WrapIndex(ref int index)
-    {
-        if (index < 0) index = PlaybackSequence.Count - 1;
-        if (index == PlaybackSequence.Count) index = 0;
-    }
-    
-    private void SetNextAdvanceTime()
-    {
-        if (!AutoAdvance)
-        {
-            AutoAdvanceTime = DateTime.MaxValue;
-            return;
-        }
-
-        double stagger = (Config.StaggerMode == PlaybackStaggerMode.Staggered) ? random.Next(1000) - 500 : 0;
-        AutoAdvanceTime = DateTime.Now.AddSeconds(Config.ShuffleTime + stagger);
-    }
-
-    private void ShowSlide(int advance = 0, bool changeHighlightsMode = false)
-    {
-        // advance should be 0 when changing highlights mode, but index can
-        // still change if the current index is not already a highlight image
-
-        AdvanceIndex(ref PlaybackIndex, advance);
-
-        if (!changeHighlightsMode)
-        {
-            if (advance == +1)
-            {
-                SlidePrev = Slide;
-                Slide = SlideNext;
-                var index = PlaybackIndex;
-                AdvanceIndex(ref index, advance);
-                SlideNext = LoadImage(ResolvePathname(index));
-            }
-
-            if (advance == -1)
-            {
-                SlideNext = Slide;
-                Slide = SlidePrev;
-                var index = PlaybackIndex;
-                AdvanceIndex(ref index, advance);
-                SlidePrev = LoadImage(ResolvePathname(index));
-            }
-
-            Render();
-        }
-        else
-        {
-            // reload all three when changing highlights mode
-            ReloadAll();
-        }
-    }
-
-    private void RenderInit()
-    {
-        Window.MakeCurrent();
-        
-        GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        GL.Clear(ClearBufferMask.ColorBufferBit);
-
-        GL.UseProgram(ShaderHandle);
-        
-        // find the frag uniforms
-        UniformSlide = GL.GetUniformLocation(ShaderHandle, "slide");
-        UniformResolution = GL.GetUniformLocation(ShaderHandle, "resolution");
-        UniformImageSize = GL.GetUniformLocation(ShaderHandle, "imagesize");
-        UniformSizeMode = GL.GetUniformLocation(ShaderHandle, "sizemode");
-        
-        // prepare the vertex stage
-        var locationVertices = GL.GetAttribLocation(ShaderHandle, "vertices");
-        var locationTexCoords = GL.GetAttribLocation(ShaderHandle, "vertexTexCoords");
-        (VertexArrayObject, VertexBufferObject, ElementBufferObject) = OpenGLUtils.InitializeVertices(ShaderHandle, locationVertices, locationTexCoords);
-        
-        // prepare a slide texture
-        TextureHandle = OpenGLUtils.AllocateTexture();
-    }
-
-    private void Render()
-    {
-        if (ShaderHandle == -1) return;
-
-        Window.MakeCurrent();
-        
-        GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        GL.Clear(ClearBufferMask.ColorBufferBit);
-        
-        GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2D, TextureHandle);
-        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, Slide.Width, Slide.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, Slide.Data);
-
-        GL.UseProgram(ShaderHandle);
-
-        ImageSize = new Vector2(Slide.Width, Slide.Height);
-        GL.Uniform1(UniformSlide, TextureUnit.Texture0.ToOrdinal());
-        GL.Uniform2(UniformResolution, Resolution);
-        GL.Uniform2(UniformImageSize, ImageSize);
-        GL.Uniform1(UniformSizeMode, SizeMode);
-        
-        GL.BindVertexArray(VertexArrayObject);
-        GL.DrawElements(PrimitiveType.Triangles, OpenGLUtils.Indices.Length, DrawElementsType.UnsignedInt, 0);
-        
-        Window.Context.SwapBuffers();
-    }
     
     public void Dispose()
     {
+        if(IsDisposed) return;
+        IsDisposed = true;
+        
         if (VertexBufferObject != -1) GL.DeleteBuffer(VertexBufferObject);
         VertexArrayObject = -1;
         
@@ -380,8 +251,12 @@ public class SlideWindow : IDisposable
         
         if (ShaderHandle != -1) GL.DeleteProgram(ShaderHandle);
         ShaderHandle = -1;
-        
+
+        Window?.Close();
         Window?.Dispose();
         Window = null;
+        
+        GLFW.Terminate();        
     }
+    private bool IsDisposed = false;
 }
