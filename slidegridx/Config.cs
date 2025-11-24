@@ -122,11 +122,13 @@ public static class Config
                     break;
                 
                 case SectionNames.Content:
+                    if (ChildProcessManager.GridNumber > -1) break; // child processes don't need file lists
                     if(!Path.IsPathFullyQualified(text)) return $"Invalid [Content] entry: {text}";
                     AddImageData(Content, text);
                     break;
                 
                 case SectionNames.Highlights:
+                    if (ChildProcessManager.GridNumber > -1) break; // child processes don't need file lists
                     if(!Path.IsPathFullyQualified(text)) return $"Invalid [Content] entry: {text}";
                     AddImageData(Highlights, text);
                     break;
@@ -134,7 +136,7 @@ public static class Config
         }
 
         if (Grids.Count == 0) return "Must define one or more display grids.";
-        if (Content.Count == 0) return "Must define one or more content entries.";
+        if (ChildProcessManager.GridNumber == -1 && Content.Count == 0) return "Must define one or more content entries.";
         
         return null;
     }
