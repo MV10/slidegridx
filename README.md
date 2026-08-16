@@ -1,5 +1,7 @@
 # slidegridx
 
+> Replaced by my new cross-platform [`sgx`](https://github.com/MV10/sgx) program.
+
 A simple multi-monitor or tiled-window slideshow Linux program for events or parties.
 
 Features:
